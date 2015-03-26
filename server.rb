@@ -1,22 +1,47 @@
 require 'sinatra'
 require 'twitter'
+require 'json'
+require 'byebug'
+require 'dotenv'
+Dotenv.load
+
 set :server, 'webrick'
-configuration = require 'config.json'
+# configuration = JSON.parse(File.read('config.json'))
+# configuration = require 'config.json' --> did not work :/
 
 get '/' do
   'Hello, world!'
 end
 
+consumer_key = ENV["consumer_key"]
+puts consumer_key
+
 client = Twitter::REST::Client.new do |config|
-  config.consumer_key        = configuration.consumer_key
-  config.consumer_secret     = configuration.consumer_secret
-  # config.access_token        = "YOUR_ACCESS_TOKEN"
-  # config.access_token_secret = "YOUR_ACCESS_SECRET"
+  config.consumer_key        = ENV["consumer_key"]
+  config.consumer_secret     = ENV["consumer_secret"]
+  config.access_token        = ENV["access_token"]
+  config.access_token_secret = ENV["access_token_secret"]
 end
 
+lat = 37.7749300
+lng = -122.4194200
+radius = 5000000 #in miles
+result_count = 100
+
 get '/tweets' do
-  client.search(params['q'], result_type: "recent").take(10).each do |tweet|
-    puts tweet.text
+  twitterObjects = client.search(params['q'], {result_type: "recent", geocode:"#{lat},#{lng},#{radius}mi"}).take(result_count)
+  customTwitterObjects = []
+  for twitterObject in twitterObjects
+    customTwitterObject = {
+      text: twitterObject.text,
+      location: {
+        lat: twitterObject.geo.coordinates.first,
+        long: twitterObject.geo.coordinates.last
+      },
+      username: twitterObject.user.name
+    }
+    customTwitterObjects.push(customTwitterObject)
   end
-  'return tweets for ' + params['q']
+  content_type :json
+  customTwitterObjects.to_json
 end
