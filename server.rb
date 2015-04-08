@@ -3,6 +3,8 @@ require 'twitter'
 require 'json'
 require 'byebug'
 require 'dotenv'
+require 'erubis'
+
 Dotenv.load
 
 set :server, 'webrick'
@@ -22,24 +24,41 @@ client = Twitter::REST::Client.new do |config|
 end
 
 post '/tweets' do
-  lat = 37.7749300
-  lng = -122.4194200
-  radius = 5000000 #in miles
+  lat = 36.575835
+  lng = -94.746094
+  radius = 5000 #in miles
   result_count = 100
+  puts "  SHOULD GO TO TWITTER"
+  puts "----#{params['term']}-----"
+  twitterObjects = client.search(
+    params['term'],
+    {
+      result_type: "recent",
+      geocode:"#{lat},#{lng},#{radius}mi",
+      count: result_count
+    }
+  )
 
-  twitterObjects = client.search(params['q'], {result_type: "recent", geocode:"#{lat},#{lng},#{radius}mi"}).take(result_count)
-  customTwitterObjects = []
-  for twitterObject in twitterObjects
-    customTwitterObject = {
+  puts "TWITTER COUNT = #{twitterObjects.count}"
+
+  filteredByGeo = twitterObjects.reject {|t| t.geo.coordinates.nil? }
+  puts "FILTERED TWITTER COUNT = #{filteredByGeo.count}"
+
+  cleanTweets = []
+  filteredByGeo.each do |twitterObject|
+    cleanTweets.push({
       text: twitterObject.text,
+      username: twitterObject.user.name,
       location: {
         lat: twitterObject.geo.coordinates.first,
         long: twitterObject.geo.coordinates.last
-      },
-      username: twitterObject.user.name
-    }
-    customTwitterObjects.push(customTwitterObject)
+      }
+    })
   end
+
+  # puts "CLEAN TWEET COUNT = #{cleanTweets.count}"
+
   content_type :json
-  customTwitterObjects.to_json
+  @tweets = cleanTweets.to_json
+  @tweets
 end
