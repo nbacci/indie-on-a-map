@@ -1,127 +1,145 @@
 <html>
-  <head>
-    <title>IndieOnAMap</title>
-    <script src="http://d3js.org/d3.v3.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
-  </head>
-  <body>
-    <nav class="navbar navbar-default">
-      <div class="container-fluid">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="#">Indie on a Map</a>
-        </div>
-          <form class="navbar-form navbar-left" role="search" action="/tweets" method="post">
-            <div class="form-group">
-              <input type="text" name="term" class="form-control" placeholder="Search Tweets">
-            </div>
-            <button class="btn btn-default">Submit</button>
-          </form>
-        </div>
-      <div>
-    </nav>
+<head>
+  <title>IndieOnAMap</title>
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+  <link rel="stylesheet" href="bootstrap/css/main.css">
+</head>
+<body>
+  <nav class="jumbotron">
+    <h1 class="logo">Indie on a Map</h1>
+    <h2 class="subtag"><small>Just type in the name of your band and find out where your fans are!</small></h2>
+    <!-- <div class="container-fluid">
+    <div class="navbar-header">
+    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+    <span class="sr-only">Toggle navigation</span>
+    <span class="icon-bar"></span>
+    <span class="icon-bar"></span>
+    <span class="icon-bar"></span>
+  </button>
+  <a class="navbar-brand" href="#">Indie on a Map</a>
+</div>
+<form class="navbar-form navbar-left" role="search" action="/tweets" method="post">
+<div class="form-group">
+<input type="text" name="term" class="form-control" placeholder="Search Tweets">
+</div>
+<button class="btn btn-default">Submit</button>
+</form>
+</div>
+<div> -->
+</nav>
 
-    <div id="page-wrap">
-      <h1>Map the Pulse of your Band!</h1>
-      <h4>Indie on a Map is a Sinatra app that uses the Twitter Search API and data visualizations to create interactive, real-time heat maps that visualize where your band and music is trending on Twitter.</h4>
-      <h4>This project was inspired by up and coming musicians and Indie bands who want to track where in the US their music is most popular, so they can connect with new audiences.</h4>
+<div class ="page-wrap">
+  <div class="map">
+  </div>
+
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
     </div>
-
-    <div class="map">
-    </div>
-
+    <h1 class="tagline">Map the pulse of your band!</h1>
+    <form class="navbar-form search-box" role="search" action="/tweets" method="post">
+      <div class="form-group search-box">
+        <input type="text" name="term" class="form-control" placeholder="Your band name">
+      </div>
+      <button class="btn btn-default">Submit</button>
+    </form>
     <div id="searchResult"></div>
+  </div>
+  <div>
 
-    <script>
-    var mercator;
-    var width = 1350;
-    var height = 900;
-    var svg;
 
-    function drawMap() {
-      mercator = d3
-        .geo
-        .mercator()
-        .scale(800)
-        .translate([width * 1.5, height]);
+  <script>
+  var mercator;
+  var width = 1250;
+  var height = 900;
+  var svg;
 
-      var path = d3
-        .geo
-        .path()
-        .projection(mercator);
+  function drawMap() {
+    mercator = d3
+    .geo
+    .mercator()
+    .scale(800)
+    .translate([width * 1.5, height]);
 
-      svg = d3
-        .select("div.map")
-        .append("svg")
-        .attr("width", width)
-        .attr("height", height);
+    var path = d3
+    .geo
+    .path()
+    .projection(mercator);
 
-      d3.json("us.json", function(error, world) {
-        if (error) return console.error(error);
+    svg = d3
+    .select("div.map")
+    .append("svg")
+    .attr("width", width)
+    .attr("height", height);
 
-        svg.selectAll('path')
-          .data(world.features)
-          .enter()
-          .append('path')
-          .attr('d', path)
-          .style("fill", "rgb(9,157,217)")
-          .style("stroke", "black")
-          .style("stroke-width", 0.5);
-      });
-    }
+    d3.json("us.json", function(error, world) {
+      if (error) return console.error(error);
 
-    function drawTweets(tweets) {
-      var parsed = tweets.map(function(d) {
-        var coords = [+d.location.long, +d.location.lat];
-        d.coords = mercator(coords);
-        return d
-      });
+      svg.selectAll('path')
+      .data(world.features)
+      .enter()
+      .append('path')
+      .attr('d', path)
+      .style("fill", "rgb(9,157,217)")
+      .style("stroke", "black")
+      .style("stroke-width", 0.5);
+    });
+  }
 
-      svg
-        .append("g")
-        .attr("class", "bubble")
-        .selectAll("circle")
-        .data(parsed)
-        .enter()
-        .append("circle")
-        .attr('cx', function(d) {
-          return d.coords[0];
-        })
-        .attr('cy', function(d) {
-          return d.coords[1];
-        })
-        .attr("r", 1.5);
-    }
-
-    $(document).ready(function() {
-      drawMap();
-
-      $('form').on('submit', function(e){
-        e.preventDefault();
-
-        $.ajax({
-          url: "/tweets",
-          method: "POST",
-          data: {term: $('input').val()}
-        })
-        .done(function(msg) {
-          tweets = msg
-          drawTweets(tweets);
-
-          $('#searchResult').html("")
-          for(var i = 0; i < tweets.length; i++) {
-            $('#searchResult').append("<p>" + tweets[i].text + "</p>")
-          }
-        });
-      });
+  function drawTweets(tweets) {
+    var parsed = tweets.map(function(d) {
+      var coords = [+d.location.long, +d.location.lat];
+      d.coords = mercator(coords);
+      return d
     });
 
-    </script>
-  </body>
+    svg
+    .append("g")
+    .attr("class", "bubble")
+    .selectAll("circle")
+    .data(parsed)
+    .enter()
+    .append("circle")
+    .attr('cx', function(d) {
+      return d.coords[0];
+    })
+    .attr('cy', function(d) {
+      return d.coords[1];
+    })
+    .attr("r", 1.5);
+  }
+
+  $(document).ready(function() {
+    drawMap();
+
+    $('form').on('submit', function(e){
+      e.preventDefault();
+
+      $.ajax({
+        url: "/tweets",
+        method: "POST",
+        data: {term: $('input').val()}
+      })
+      .done(function(msg) {
+        tweets = msg
+        drawTweets(tweets);
+
+        $('#searchResult').html("")
+        for(var i = 0; i < tweets.length; i++) {
+          $('#searchResult').append("<p>" + tweets[i].text + "</p>")
+        }
+      });
+    });
+  });
+
+  </script>
+</div>
+</body>
 </html>
